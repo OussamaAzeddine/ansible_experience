@@ -17,3 +17,6 @@ TODO
 2.Steps to Install 
 
 TODO
+
+# Credits
+This code is based and inspired from https://github.com/andrewmackett/ansible-splunk-common
