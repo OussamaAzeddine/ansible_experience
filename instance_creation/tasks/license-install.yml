@@ -1,0 +1,19 @@
+- name: Copy Licence file
+  copy:
+    src: ../files/Splunk_Enterprise_50GB_NOTFORRESALE.License
+    dest: /tmp/Splunk_Enterprise_50GB_NOTFORRESALE.License
+    owner: splunk
+    group: splunk
+    mode: 0644
+
+- name: Apply license
+  vars: 
+    license_path: /tmp/Splunk_Enterprise_50GB_NOTFORRESALE.License
+  command: "/opt/splunk/bin/splunk add licenses /tmp/Splunk_Enterprise_50GB_NOTFORRESALE.License -auth {{ splunk_common_admin_user }}:{{ splunk_common_admin_passwd }} --accept-license --answer-yes"
+  register: add_lic_cmd
+  changed_when: add_lic_cmd.rc == 0
+  become: yes
+  become_user: "{{ splunk_os_user }}"
+  no_log: true 
+  ignore_errors: yes
+  notify: restart splunk

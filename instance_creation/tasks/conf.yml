@@ -1,0 +1,7 @@
+---
+  - name: Configure splunk-launch.conf
+    template:
+      src: splunk-launch.conf.j2
+      dest: '{{ splunk_home }}/etc/splunk-launch.conf'
+      owner: "{{ splunk_os_user }}"
+      group: "{{ splunk_os_group }}"

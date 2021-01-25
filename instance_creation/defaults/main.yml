@@ -1,0 +1,25 @@
+---
+# Version info
+splunk_version: 8.1.1
+splunk_build: 08187535c166
+splunk_deb_url: "https://download.splunk.com/products/splunk/releases/{{splunk_version}}/linux/splunk-{{splunk_version}}-{{splunk_build}}-linux-2.6-amd64.deb"
+splunk_rpm_url: "https://download.splunk.com/products/splunk/releases/{{splunk_version}}/linux/splunk-{{splunk_version}}-{{splunk_build}}-linux-2.6-x86_64.rpm"
+splunk_tgz_url: "https://download.splunk.com/products/splunk/releases/{{splunk_version}}/linux/splunk-{{splunk_version}}-{{splunk_build}}-Linux-x86_64.tgz"
+
+# Splunk service options
+splunk_home: /opt/splunk
+splunk_server_name: Splunkd
+splunk_web_name: splunkweb
+splunk_os_user: splunk
+splunk_os_group: splunk
+
+# web.conf settings
+splunk_common_enable_ssl: True
+splunk_common_http_port: 8000
+splunk_common_allowSslRenegotiation: False
+
+# Splunk credentials and secrets
+### Do not use these values in your systems! ###
+splunk_common_admin_user: 'admin'
+splunk_common_admin_passwd: 'admin123'
+splunk_admin_email: "admin@test.com"

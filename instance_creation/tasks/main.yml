@@ -1,0 +1,9 @@
+---
+- include_tasks: splunk.yml
+- include_tasks: conf.yml
+- include_tasks: splunk_requirements.yml
+- include_tasks: license-install.yml
+
+
+- name: Finished
+  debug: msg="Splunk web interface at https://{{ inventory_hostname }}:{{splunk_common_http_port }}"

@@ -1,0 +1,5 @@
+# This is the master playbook
+---
+- hosts: all
+  roles:
+    - instance_creation

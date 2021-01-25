@@ -1,0 +1,18 @@
+---
+- name: export Splunk_home path
+  shell: "export SPLUNK_HOME='/opt/splunk'"
+  become: yes
+  become_user: splunk
+  ignore_errors: yes
+
+- name: export Splunk in $path
+  shell: "export PATH=$PATH:/opt/splunk/bin"
+  become: yes 
+  become_user: splunk
+  ignore_errors: yes
+
+- name: source bashrc
+  shell: "source ~/.bashrc"
+  become: yes
+  become_user: splunk
+  ignore_errors: yes

@@ -1,0 +1,122 @@
+---
+- name: add splunk group
+  group:
+    name: "{{ splunk_os_group }}"
+    state: present
+
+- block:
+  - name: add splunk user
+    user:
+      name: "{{ splunk_os_user }}"
+      comment: "Splunk service user"
+      groups: "{{ splunk_os_group }}"
+      createhome: yes
+
+  - name: make /opt writetable by splunk
+    file:
+      path: "/opt"
+      mode: 0777
+  become: true
+
+- name: check for existing splunk version
+  block:
+    - shell: dpkg-query --showformat='${Version}' --show splunk
+      changed_when: False
+      ignore_errors: yes
+      register: dpkg_result
+      when: ansible_os_family == "Debian"
+    - shell: yum list installed | grep splunk | awk '{print $2}' | awk -F'-' '{print $1}'
+      changed_when: False
+      ignore_errors: yes
+      register: yum_result
+      when: ansible_os_family == "RedHat"
+
+- name: splunk upgrade tasks
+  include_tasks: splunk-upgrade.yml
+  when:
+    - (ansible_os_family == "Debian") and ('splunk_version != dpkg_result.stdout')
+    - (ansible_os_family == "Debian") and ('dpkg_result.rc != 1')
+    - (ansible_os_family == "RedHat") and ('splunk_version != yum_result.stdout')
+    - (ansible_os_family == "RedHat") and ('dpkg_result.rc != 1')
+
+- name: download splunk package file
+  block:
+    - get_url: 
+        url: "{{ splunk_deb_url }}"
+        dest: "/tmp/{{ splunk_deb_url | basename }}"
+        checksum: "md5:{{ (lookup('url', splunk_deb_url + '.md5')).split(' ')[-1] }}"
+        use_proxy: yes
+      when: ansible_os_family == "Debian"
+    - get_url: 
+        url: "{{ splunk_tgz_url }}"
+        dest: "/tmp/{{ splunk_tgz_url | basename }}"
+        #        checksum: "md5:{{ (lookup('url', splunk_tgz_url + '.md5')).split(' ')[-1] }}"
+        use_proxy: yes
+      when: ansible_os_family == "RedHat"
+
+- name: install splunk from package
+  unarchive:
+    remote_src: yes
+    dest: "/opt"
+    src: "/tmp/{{ splunk_tgz_url | basename }}"
+  when: (ansible_os_family == "RedHat") and
+        (skip_upgrade is not defined)
+  notify: restart splunk
+  become: true
+
+- name: change "{{ splunk_home }}" owner and owner group
+  file:
+    owner: "{{ splunk_os_user }}"
+    group: "{{ splunk_os_group }}"
+    path: "{{ splunk_home }}"
+    recurse: yes
+  become: yes
+
+- name: pin splunk version
+  block:
+    - dpkg_selections:
+        name: splunk
+        selection: hold
+      when: ansible_os_family == "Debian"
+    # - dpkg_selections:
+    #     name: splunk
+    #     selection: hold
+
+- name: upstart setup
+  include_tasks: upstart.yml
+  when:
+    - ansible_service_mgr == "upstart"
+    - splunk_deb_installed.changed
+    - splunk_rpm_installed.changed
+
+- name: systemd setup
+  include_tasks: systemd.yml
+  when:
+    - ansible_service_mgr == "systemd"
+
+- name: touch ui so it does not ask for the password to be changed
+  file:
+    path: '{{ splunk_home }}/etc/.ui_login'
+    state: touch
+  become: yes
+  become_user: "{{ splunk_os_user }}"
+  #  when: splunk_deb_installed.changed or
+  #        splunk_rpm_installed.changed
+
+- name: configure sudoers
+  template:
+    src: sudoers.j2
+    dest: /etc/sudoers.d/splunk
+    validate: 'visudo -cf %s'
+    owner: "splunk"
+    group: "splunk"
+    mode: 0440
+  become: true
+
+- name: Configure Splunk passwd
+  template:
+    src: passwd.j2
+    dest: "{{ splunk_home }}/etc/system/default/user-seed.conf"
+    owner: "{{ splunk_os_user }}"
+    group: "{{ splunk_os_group }}"
+    mode: 0600
