@@ -31,14 +31,6 @@
       register: yum_result
       when: ansible_os_family == "RedHat"
 
-- name: splunk upgrade tasks
-  include_tasks: splunk-upgrade.yml
-  when:
-    - (ansible_os_family == "Debian") and ('splunk_version != dpkg_result.stdout')
-    - (ansible_os_family == "Debian") and ('dpkg_result.rc != 1')
-    - (ansible_os_family == "RedHat") and ('splunk_version != yum_result.stdout')
-    - (ansible_os_family == "RedHat") and ('dpkg_result.rc != 1')
-
 - name: download splunk package file
   block:
     - get_url: 
